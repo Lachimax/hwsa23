@@ -1,24 +1,27 @@
-# This is a sample Python script.
-
-# Press Shift+F10 to execute it or replace it with your code.
-# Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
-
-import hwsa.attendee
+from hwsa.event import Event
 
 
-def main(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press Ctrl+F8 to toggle the breakpoint.
+def main(
+        path: str,
+        **kwargs
+):
+    hwsa_2023 = Event.from_mq_xl(path=path)
+    hwsa_2023.allocate_roommates()
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(
         description="Assigns rooms for attendees."
     )
+    parser.add_argument(
+        "-p",
+        type=str,
+        default="/home/lachlan/Documents/hwsa/Comprehensive report_d0836c81-5fb7-48c7-9e47-9338326a5831.xlsx",
+        description="Path to Macquarie-generated XLSX of attendees"
+    )
 
-    main('PyCharm')
+    args = parser.parse_args()
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+    main(**args.__dict__)

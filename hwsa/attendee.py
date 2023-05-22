@@ -1,27 +1,52 @@
 import numpy as np
 import pandas as pd
 
+from hwsa.room import Room
+
 
 class Attendee:
     def __init__(
             self,
             **kwargs
     ):
-
+        self.id = None
         self.name_given = None
         self.name_family = None
         self.phone = None
         self.gender = None
         self.room_preferences = []
+        self.roommate_nominee = None
+        self.roommate_nominee_obj = None
+        self.room = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     def __str__(self):
-        return f"{self.name_given}"
+        return f"{self.id} {self.name_given} {self.name_family}"
+
+    def __eq__(self, other):
+        return str(self) == str(other)
+
+    def __hash__(self):
+        return hash(str(self))
 
     def prefer_roommate(self, other: 'Attendee'):
         return "No preference" in self.room_preferences or other.gender in self.room_preferences
+
+    def loose_match(self, name: str):
+        return name in str(self)
+
+    def has_nominee(self):
+        return isinstance(self.roommate_nominee, str)
+
+    def has_room(self):
+        return isinstance(self.room, Room)
+
+    def n_roommates(self):
+        if not self.has_room():
+            return 0
+        return len(self.room.roommates)
 
     @classmethod
     def from_mq_xl_row(cls, row: 'pandas.core.series.Series'):
