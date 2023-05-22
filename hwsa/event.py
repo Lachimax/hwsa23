@@ -123,6 +123,7 @@ class Event:
 
     def assign_to_room(self, room, people: list):
         people = people.copy()
+        people.sort(key=lambda a: a.n_preferences())
         while people and room.n_roommates() < self.min_per_room:
             room.add_roommate(people.pop())
 
@@ -132,7 +133,6 @@ class Event:
         rooms = []
         for gender, people in self.genders.items():
             roomless = self.get_roomless(people)
-            roomless.sort(key=lambda a: a.n_preferences())
             while roomless and not self.all_rooms_full():
                 room = self.next_room()
                 self.assign_to_room(room=room, people=roomless)
