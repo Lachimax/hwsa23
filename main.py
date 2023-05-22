@@ -1,8 +1,5 @@
 from hwsa.event import Event
 
-
-# TODO: Output all results
-# TODO: Get list of room numbers and assign from that
 # TODO: prioritise people with specified preferences, the fewer the earlier
 
 def main(

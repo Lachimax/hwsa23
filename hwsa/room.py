@@ -16,6 +16,14 @@ class Room:
         for p in self.roommates:
             print("\t", p.room_str())
 
+    def list_roommates(self):
+        return list(
+            map(
+                lambda p: str(p),
+                self.roommates
+            )
+        )
+
     def add_roommate(self, person: 'Attendee'):
         # Check if the room is already full
         # Check if it's a real person (None or nan will get passed here sometimes, and we don't want those piling up)

@@ -16,16 +16,20 @@ class Event:
         self.min_per_room = None
         self.attendees = []
         self.attendees_dict = {}
+        self.room_numbers = []
         self.rooms = []
         self.diets = {}
         self.genders = {}
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-        for i in range(self.n_rooms):
+        if not self.room_numbers:
+            self.room_numbers = list(range(1, self.n_rooms + 1))
+
+        for n in self.room_numbers:
             self.rooms.append(
                 Room(
-                    id=i + 1,
+                    id=n,
                     n_max=self.max_per_room
                 )
             )
@@ -247,6 +251,15 @@ class Event:
         print("Min per room:")
         print(self.min_per_room)
 
+        self.write_rooms()
+        self.write_attendee_table()
+
+    def write_rooms(self):
+        room_dict = {}
+        for room in self.rooms:
+            room_dict[room.id] = room.list_roommates()
+        u.save_params(os.path.join(self.output, "rooms.yaml"), room_dict)
+
     def add_diet(self, person: Attendee):
         if person.has_diet():
             if person.diet not in self.diets:
@@ -276,6 +289,16 @@ class Event:
         }
         u.save_params(file=os.path.join(self.output, "diet.yaml"), dictionary=diets_write)
         return diets_write
+
+    def to_dataframe(self):
+        attendee_dicts = list(map(lambda a: a.__dict__, self.attendees))
+        df = pd.DataFrame.from_dict(data=attendee_dicts)
+        return df
+
+    def write_attendee_table(self):
+        df = self.to_dataframe()
+        df.to_csv(os.path.join(self.output, "attendees.csv"))
+
 
     @classmethod
     def from_mq_xl(cls, path: str, **kwargs):

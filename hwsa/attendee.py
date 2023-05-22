@@ -25,6 +25,13 @@ class Attendee:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        if isinstance(self.phone, str):
+            if self.phone.startswith("04"):
+                self.phone = "+614" + self.phone[2:]
+            if len(self.phone) == 12:
+                p = self.phone
+                self.phone = p[:3] + " " + p[3:6] + " " + p[6:9] + " " + p[9:12]
+
         if "No preference" in self.room_preferences:
             self.room_preferences.remove("No preference")
 
@@ -38,7 +45,7 @@ class Attendee:
         return hash(str(self))
 
     def room_str(self):
-        return f"{self}; {self.gender}; {self.room_preferences}"
+        return f"{self}; gender {self.gender}; nomiated {self.roommate_nominee}; room preferences {self.room_preferences}"
 
     def prefer_roommate(self, other: 'Attendee'):
         return not self.room_preferences or other.gender in self.room_preferences
@@ -97,21 +104,21 @@ class Attendee:
         return Attendee(
             id=row.pop("ID"),
             title=row.pop("Title"),
-            name_given=row["First Name"],
-            name_family=row["Last Name"],
-            phone=row["Mobile Number"],
-            email=row["Primary Email"],
-            diet=row["Dietary Requirements"],
+            name_given=row.pop("First Name"),
+            name_family=row.pop("Last Name"),
+            phone=str(row.pop("Mobile Number")),
+            email=row.pop("Primary Email"),
+            diet=row.pop("Dietary Requirements"),
             career_stage=career,
-            gender=row["Marketing - Gender Identity"],
+            gender=row.pop("Marketing - Gender Identity"),
             room_preferences=room_preferences,
-            roommate_nominee=row["Marketing - Nominated roommate"],
-            affiliation=row["Marketing - Primary Affiliation"],
+            roommate_nominee=row.pop("Marketing - Nominated roommate"),
+            affiliation=row.pop("Marketing - Primary Affiliation"),
             research_types=research_types,
-            research_topic=row["Marketing - Your Research/Thesis Topic"],
-            registration_type=row["Registration Type - Name"],
-            amount_outstanding=float(row["Amount Outstanding"]),
-            amount_required=float(row["Amount Required"]),
-            registered=pd.to_datetime(row["Date Registered"]),
+            research_topic=row.pop("Marketing - Your Research/Thesis Topic"),
+            registration_type=row.pop("Registration Type - Name"),
+            amount_outstanding=float(row.pop("Amount Outstanding")),
+            amount_required=float(row.pop("Amount Required")),
+            registered=pd.to_datetime(row.pop("Date Registered")),
             **row
         )
