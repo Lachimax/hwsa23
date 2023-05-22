@@ -14,7 +14,7 @@ class Room:
 
     def print_roommates(self):
         for p in self.roommates:
-            print("\t", p, p.gender, p.room_preferences)
+            print("\t", p.room_str())
 
     def add_roommate(self, person: 'Attendee'):
         # Check if the room is already full

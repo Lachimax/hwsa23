@@ -1,11 +1,15 @@
+import os
+
 import pandas as pd
 
 from hwsa.attendee import Attendee
 from hwsa.room import Room
+import hwsa.utils as u
 
 
 class Event:
     def __init__(self, **kwargs):
+        self.output = "/home/"
         self.n_rooms = 40
         self.max_per_room = 2
         self.attendees = []
@@ -84,19 +88,31 @@ class Event:
     def get_diets(self):
         for p in self.attendees:
             self.add_diet(p)
+        return self.diets
 
     def show_diets(self):
         self.get_diets()
         print("Dietary Requirements:")
+        diets_str = {}
+        diets_n = {}
         for diet, people in self.diets.items():
+            diets_str[diet] = list(map(lambda p: str(p), people))
+            diets_n[diet] = len(diets_str[diet])
             print(f"\t{diet}: {len(people)}")
             for p in people:
                 print("\t\t", p)
 
+        diets_write = {
+            "People": diets_str,
+            "Numbers": diets_n
+        }
+        u.save_params(file=os.path.join(self.output, "diet.yaml"), dictionary=diets_write)
+        return diets_write
+
     def allocate_roommates(self):
 
         # First pass: find people who have nominated each other as roommates and assign them to the same room.
-        print("\n The following rooms were assigned based on nominees:")
+        print("\nThe following rooms were assigned based on nominees:")
         self._assign_nominated()
         nominated = list(
             filter(
@@ -105,7 +121,7 @@ class Event:
             )
         )
         for r in nominated:
-            print(str(r))
+            print(f"{r}:")
             r.print_roommates()
 
         print("\nThe following attendees have nominated roommates but have not been assigned them:")
@@ -120,7 +136,7 @@ class Event:
             add_str = ""
             if nominee is None:
                 add_str = "; attendee not found"
-            print(str(p), f"(nominated {p.roommate_nominee}{add_str})")
+            print("\t", str(p), f"(nominated {p.roommate_nominee}{add_str})")
 
         # Second pass: assign roomless people based on gender
         # Note: Even if someone has multiple or no preferences, have it try to assign to same gender first
@@ -129,7 +145,7 @@ class Event:
         pairs = self._generate_pairs()
         print("\nThe following compatible pairs were generated:")
         for pair in pairs:
-            print(f"{pair[0]}, {pair[1]}")
+            print(f"\t{pair[0]}, {pair[1]}")
 
         roomless = self.get_roomless()
         for p in roomless:
@@ -145,12 +161,12 @@ class Event:
             )
         )
         for p in prefs_not_own:
-            print(str(p))
+            print("\t", p.room_str())
 
         print("\nThe following attendees have not been assigned rooms:")
         roomless = self.get_roomless()
         for p in roomless:
-            print(p)
+            print("\t", p.room_str())
 
         # Some statistics
         rooms_full = list(
@@ -165,13 +181,13 @@ class Event:
                 rooms_full
             )
         )
-        print("\n Number of full rooms:")
+        print("\nNumber of full rooms:")
         print(len(rooms_full))
         print("Number of rooms above capacity:")
         print(len(rooms_overfull))
 
     @classmethod
-    def from_mq_xl(cls, path: str):
+    def from_mq_xl(cls, path: str, **kwargs):
         if not path.endswith(".xlsx"):
             path += ".xlsx"
         xl = pd.read_excel(path)
@@ -191,7 +207,7 @@ class Event:
             path.replace(".xlsx", ".csv")
         )
 
-        event = Event()
+        event = Event(**kwargs)
         for row in xl_mod.iloc:
             person = Attendee.from_mq_xl_row(row=row)
             event.add_attendee(person=person)

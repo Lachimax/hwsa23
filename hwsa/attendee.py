@@ -33,6 +33,9 @@ class Attendee:
     def __hash__(self):
         return hash(str(self))
 
+    def room_str(self):
+        return f"{self}; {self.gender}; {self.room_preferences}"
+
     def prefer_roommate(self, other: 'Attendee'):
         return "No preference" in self.room_preferences or other.gender in self.room_preferences
 
@@ -40,7 +43,7 @@ class Attendee:
         return name in str(self)
 
     def has_diet(self):
-        return isinstance(self.diet, str)
+        return isinstance(self.diet, str) and self.diet != "No specific requirements"
 
     def has_nominee(self):
         return isinstance(self.roommate_nominee, str)
