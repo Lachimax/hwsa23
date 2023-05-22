@@ -31,9 +31,24 @@ class Room:
     def full(self):
         return self.n_roommates() >= self.n_max
 
+    def empty(self):
+        return self.n_roommates() == 0
+
     def overfull(self):
         """
         Shouldn't ever return True, but here for debug purposes.
         :return:
         """
         return self.n_roommates() > self.n_max
+
+    def single_gender(self):
+        gender = self.roommates[0].gender
+        for person in self.roommates:
+            if person.gender != gender:
+                return False
+        return gender
+
+    # def suitable_for(self, person: 'Attendee'):
+    #     for roommate in self.roommates:
+    #         if
+

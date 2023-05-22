@@ -20,6 +20,7 @@ class Attendee:
         self.roommate_nominee = None
         self.roommate_nominee_obj = None
         self.room = None
+        self.registration_type = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -47,6 +48,9 @@ class Attendee:
 
     def has_nominee(self):
         return isinstance(self.roommate_nominee, str)
+
+    def needs_room(self):
+        return self.registration_type == "Attendance & Accommodation"
 
     def has_room(self):
         from hwsa.room import Room

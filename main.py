@@ -30,6 +30,9 @@ if __name__ == '__main__':
         default="/home/lachlan/Documents/hwsa/",
         help="Output directory"
     )
+    # parser.add_argument(
+    #
+    # )
 
     args = parser.parse_args()
 
