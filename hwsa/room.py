@@ -9,6 +9,13 @@ class Room:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def __str__(self):
+        return f"Room {self.id}"
+
+    def print_roommates(self):
+        for p in self.roommates:
+            print("\t", p, p.gender, p.room_preferences)
+
     def add_roommate(self, person: 'Attendee'):
         # Check if the room is already full
         # Check if it's a real person (None or nan will get passed here sometimes, and we don't want those piling up)

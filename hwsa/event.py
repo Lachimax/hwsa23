@@ -11,6 +11,7 @@ class Event:
         self.attendees = []
         self.attendees_dict = {}
         self.rooms = []
+        self.diets = {}
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -49,8 +50,16 @@ class Event:
                 person.roommate_nominee_obj = self.find_name(person.roommate_nominee)
 
     def next_room(self):
-        self.rooms.sort(key=lambda rm: rm.n_roomates())
+        self.rooms.sort(key=lambda rm: rm.n_roommates())
         return self.rooms[0]
+
+    def get_roomless(self):
+        return list(
+            filter(
+                lambda p: not p.has_room(),
+                self.attendees
+            )
+        )
 
     def _assign_nominated(self):
         # Use string nominee to assign Attendee object
@@ -66,33 +75,67 @@ class Event:
             if not room.full() and nominees_match(person, nominee):
                 room.add_roommate(nominee)
 
-    def allocate_roommates(self):
-        # Even if someone has multiple preferences, have it prefer their own gender
+    def add_diet(self, person: Attendee):
+        if person.has_diet():
+            if person.diet not in self.diets:
+                self.diets[person.diet] = []
+            self.diets[person.diet].append(person)
 
-        pairs = self._generate_pairs()
-        print("\nThe following compatible pairs were generated:")
-        for pair in pairs:
-            print(f"{pair[0]}, {pair[1]}")
+    def get_diets(self):
+        for p in self.attendees:
+            self.add_diet(p)
+
+    def show_diets(self):
+        self.get_diets()
+        print("Dietary Requirements:")
+        for diet, people in self.diets.items():
+            print(f"\t{diet}: {len(people)}")
+            for p in people:
+                print("\t\t", p)
+
+    def allocate_roommates(self):
 
         # First pass: find people who have nominated each other as roommates and assign them to the same room.
         print("\n The following rooms were assigned based on nominees:")
         self._assign_nominated()
         nominated = list(
             filter(
-                lambda p: p.n_roommates() > 1,
-                self.attendees
+                lambda r: r.n_roommates() > 1,
+                self.rooms
             )
         )
-        for p in nominated:
-            print(str(p), ",", str(p.roommate))
+        for r in nominated:
+            print(str(r))
+            r.print_roommates()
 
-        # Second pass: assign roomless people based on gender preferences
-        roomless = list(
+        print("\nThe following attendees have nominated roommates but have not been assigned them:")
+        nominee_failed = list(
             filter(
-                lambda p: not p.has_room(),
+                lambda p: p.has_nominee() and p.roommate_nominee_obj not in p.roommates(),
                 self.attendees
             )
         )
+        for p in nominee_failed:
+            nominee = self.find_name(p.roommate_nominee)
+            add_str = ""
+            if nominee is None:
+                add_str = "; attendee not found"
+            print(str(p), f"(nominated {p.roommate_nominee}{add_str})")
+
+        # Second pass: assign roomless people based on gender
+        # Note: Even if someone has multiple or no preferences, have it try to assign to same gender first
+        # But prioritise people with specified preferences, the fewer the earlier
+
+        pairs = self._generate_pairs()
+        print("\nThe following compatible pairs were generated:")
+        for pair in pairs:
+            print(f"{pair[0]}, {pair[1]}")
+
+        roomless = self.get_roomless()
+        for p in roomless:
+            pass
+
+        # Third pass: assign still-roomless people based on listed preferences
 
         print("\nThe following attendees did not list their own gender in the 'comfortable with' field:")
         prefs_not_own = list(
@@ -104,16 +147,12 @@ class Event:
         for p in prefs_not_own:
             print(str(p))
 
-        print("\nThe following attendees have nominated roommates but have not been assigned them.")
-        nominee_failed = list(
-            filter(
-                lambda p: p.has_nominee and not p.roommate is p.roommate_nominee,
-                self.attendees
-            )
-        )
-        for p in nominee_failed:
-            print(str(p), f"(nominated {p.roommate_nominee}, assigned {p.roommate})")
+        print("\nThe following attendees have not been assigned rooms:")
+        roomless = self.get_roomless()
+        for p in roomless:
+            print(p)
 
+        # Some statistics
         rooms_full = list(
             filter(
                 lambda r: r.full(),
@@ -159,6 +198,7 @@ class Event:
 
         return event
 
+
 def compatible_roommates(person_1: 'Attendee', person_2: 'Attendee'):
     return person_1 is not person_2 and person_1.prefer_roommate(person_2) and person_2.prefer_roommate(person_1)
 
@@ -169,4 +209,3 @@ def nominees_match(person_1: 'Attendee', person_2: 'Attendee'):
         return False
     # Otherwise, we check if the nominees of the pair are each other
     return person_1.roommate_nominee_obj is person_2 and person_2.roommate_nominee_obj is person_1
-

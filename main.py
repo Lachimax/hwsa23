@@ -2,11 +2,13 @@ from hwsa.event import Event
 
 
 def main(
-        path: str,
+        p: str,
         **kwargs
 ):
-    hwsa_2023 = Event.from_mq_xl(path=path)
+    hwsa_2023 = Event.from_mq_xl(path=p)
     hwsa_2023.allocate_roommates()
+    print("\n\n")
+    hwsa_2023.show_diets()
 
 
 if __name__ == '__main__':
@@ -19,7 +21,7 @@ if __name__ == '__main__':
         "-p",
         type=str,
         default="/home/lachlan/Documents/hwsa/Comprehensive report_d0836c81-5fb7-48c7-9e47-9338326a5831.xlsx",
-        description="Path to Macquarie-generated XLSX of attendees"
+        help="Path to Macquarie-generated XLSX of attendees"
     )
 
     args = parser.parse_args()

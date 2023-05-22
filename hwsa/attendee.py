@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
 
-from hwsa.room import Room
+
+# from hwsa.room import Room
 
 
 class Attendee:
@@ -13,6 +14,7 @@ class Attendee:
         self.name_given = None
         self.name_family = None
         self.phone = None
+        self.diet = None
         self.gender = None
         self.room_preferences = []
         self.roommate_nominee = None
@@ -37,11 +39,21 @@ class Attendee:
     def loose_match(self, name: str):
         return name in str(self)
 
+    def has_diet(self):
+        return isinstance(self.diet, str)
+
     def has_nominee(self):
         return isinstance(self.roommate_nominee, str)
 
     def has_room(self):
+        from hwsa.room import Room
         return isinstance(self.room, Room)
+
+    def roommates(self):
+        if self.has_room():
+            return self.room.roommates
+        else:
+            return []
 
     def n_roommates(self):
         if not self.has_room():
