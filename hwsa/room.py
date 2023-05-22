@@ -48,7 +48,13 @@ class Room:
                 return False
         return gender
 
-    # def suitable_for(self, person: 'Attendee'):
-    #     for roommate in self.roommates:
-    #         if
+    def suitable_for(self, person: 'Attendee'):
+        for roommate in self.roommates:
+            if not compatible_roommates(person, roommate):
+                return False
+        return True
 
+
+def compatible_roommates(person_1: 'Attendee', person_2: 'Attendee'):
+    return person_1 is not person_2 and person_1.prefer_roommate(person_2) and person_2.prefer_roommate(
+        person_1)

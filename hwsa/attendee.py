@@ -25,6 +25,9 @@ class Attendee:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        if "No preference" in self.room_preferences:
+            self.room_preferences.remove("No preference")
+
     def __str__(self):
         return f"{self.id} {self.name_given} {self.name_family}"
 
@@ -38,7 +41,13 @@ class Attendee:
         return f"{self}; {self.gender}; {self.room_preferences}"
 
     def prefer_roommate(self, other: 'Attendee'):
-        return "No preference" in self.room_preferences or other.gender in self.room_preferences
+        return not self.room_preferences or other.gender in self.room_preferences
+
+    def n_preferences(self):
+        if self.room_preferences:
+            return len(self.room_preferences)
+        else:
+            return np.inf
 
     def loose_match(self, name: str):
         return name in str(self)

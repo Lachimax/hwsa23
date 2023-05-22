@@ -35,10 +35,13 @@ class Event:
         self.attendees_dict[str(person)] = person
         self.min_per_room = int(np.ceil(len(self.attendees) / self.n_rooms))
 
-    def print_attendees(self):
-        print("All attendees:")
-        self.attendees.sort(key=lambda a: a.name_family)
-        for person in self.attendees:
+    def print_attendees(self, people: list = None, sort: bool = False):
+        if people is None:
+            people = self.attendees
+        print("Attendees:")
+        if sort:
+            people.sort(key=lambda a: a.name_family)
+        for person in people:
             print("\t", person, person.room, "Needs room:", person.needs_room())
 
     def find_name(self, name: str):
@@ -93,7 +96,8 @@ class Event:
         # Use string nominee to assign Attendee object
         self._find_nominated()
         rooms = []
-        for person in self.attendees:
+        roomless = self.get_roomless()
+        for person in roomless:
             if person.has_room():
                 room = person.room
             else:
@@ -128,6 +132,7 @@ class Event:
         rooms = []
         for gender, people in self.genders.items():
             roomless = self.get_roomless(people)
+            roomless.sort(key=lambda a: a.n_preferences())
             while roomless and not self.all_rooms_full():
                 room = self.next_room()
                 self.assign_to_room(room=room, people=roomless)
@@ -137,13 +142,26 @@ class Event:
         # Then, if there are still people roomless, assign them to rooms matching their gender
         roomless = self.get_roomless()
         for person in roomless:
-            rooms = self.rooms.copy()
-            rooms = list(filter(lambda r: r.single_gender() == person.gender, rooms))
-            if rooms:
-                rooms[0].add_roommate(person)
+            rooms_this = self.rooms.copy()
+            rooms_this = list(filter(lambda r: r.single_gender() == person.gender, rooms_this))
+            if rooms_this:
+                room = rooms_this[0]
+                room.add_roommate(person)
+                if room not in rooms:
+                    rooms.append(room)
+        return rooms
 
     def assign_by_preference(self):
-
+        roomless = self.get_roomless()
+        rooms = []
+        for person in roomless:
+            rooms_this = self.rooms.copy()
+            rooms_this = list(filter(lambda r: r.suitable_for(person), rooms_this))
+            if rooms_this:
+                room = rooms_this[0]
+                room.add_roommate(person)
+                if room not in rooms:
+                    rooms.append(room)
         return rooms
 
     def allocate_roommates(self):
@@ -173,18 +191,19 @@ class Event:
         # Note: Even if someone has multiple or no preferences, have it try to assign to same gender first
         # But prioritise people with specified preferences, the fewer the earlier
 
-        # pairs = self._generate_pairs()
-        # print("\nThe following compatible pairs were generated:")
-        # for pair in pairs:
-        #     print(f"\t{pair[0]}, {pair[1]}")
-
-        print("\nThe following rooms were assigned based on gender:")
+        print("\nThe following rooms were assigned based on attendee gender:")
         gendered = self.assign_by_gender()
         for r in gendered:
             print(f"{r}:")
             r.print_roommates()
 
         # Third pass: assign still-roomless people based on listed preferences
+
+        print("\nThe following rooms were assigned based on gender PREFERENCE:")
+        preferred = self.assign_by_preference()
+        for r in preferred:
+            print(f"{r}:")
+            r.print_roommates()
 
         print("\nAll rooms:")
         self.rooms.sort(key=lambda r: r.id)
@@ -196,7 +215,7 @@ class Event:
         print("\nThe following attendees did not list their own gender in the 'comfortable with' field:")
         prefs_not_own = list(
             filter(
-                lambda p: p.gender not in p.room_preferences and "No preference" not in p.room_preferences,
+                lambda p: p.gender not in p.room_preferences and p.room_preferences,
                 self.attendees
             )
         )
