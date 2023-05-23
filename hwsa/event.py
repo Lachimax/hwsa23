@@ -11,8 +11,8 @@ import hwsa.utils as u
 class Event:
     def __init__(self, **kwargs):
         self.output = "/home/"
-        self.n_rooms = 40
-        self.max_per_room = 4
+        self.n_rooms = None
+        self.max_per_room = None
         self.min_per_room = None
         self.attendees = []
         self.attendees_dict = {}
@@ -25,6 +25,9 @@ class Event:
 
         if not self.room_numbers:
             self.room_numbers = list(range(1, self.n_rooms + 1))
+
+        if self.n_rooms is None:
+            self.n_rooms = len(self.room_numbers)
 
         for n in self.room_numbers:
             self.rooms.append(
@@ -49,6 +52,12 @@ class Event:
             print("\t", person, person.room, "Needs room:", person.needs_room())
 
     def find_name(self, name: str):
+        if "(" in name and ")" in name:
+            in_brackets = name[name.find("("):name.find(")") + 1]
+            name.replace(in_brackets, "")
+        while name.endswith(" "):
+            name = name[:-1]
+
         for person in self.attendees:
             if person.loose_match(name):
                 return person
@@ -78,6 +87,14 @@ class Event:
         return list(
             filter(
                 lambda r: r.full(),
+                self.rooms
+            )
+        )
+
+    def rooms_empty(self):
+        return list(
+            filter(
+                lambda r: r.empty(),
                 self.rooms
             )
         )
@@ -246,6 +263,8 @@ class Event:
         print(len(rooms_full))
         print("Number of rooms above capacity:")
         print(len(rooms_overfull))
+        print("Number of empty rooms:")
+        print(len(self.rooms_empty()))
         print("Max per room:")
         print(self.max_per_room)
         print("Min per room:")
@@ -298,7 +317,6 @@ class Event:
     def write_attendee_table(self):
         df = self.to_dataframe()
         df.to_csv(os.path.join(self.output, "attendees.csv"))
-
 
     @classmethod
     def from_mq_xl(cls, path: str, **kwargs):
