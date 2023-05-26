@@ -32,7 +32,7 @@ class Attendee:
                 p = self.phone
                 self.phone = p[:3] + " " + p[3:6] + " " + p[6:9] + " " + p[9:12]
 
-        if "No preference" in self.room_preferences:
+        while "No preference" in self.room_preferences:
             self.room_preferences.remove("No preference")
 
     def __str__(self):
@@ -45,7 +45,7 @@ class Attendee:
         return hash(str(self))
 
     def room_str(self):
-        return f"{self}; gender {self.gender}; nominated {self.roommate_nominee}; room preferences {self.room_preferences}"
+        return f"{self} (gender {self.gender}; nominated {self.roommate_nominee}; room preferences {self.room_preferences})"
 
     def prefer_roommate(self, other: 'Attendee'):
         return not self.room_preferences or other.gender in self.room_preferences

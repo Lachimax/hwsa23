@@ -37,6 +37,8 @@ class Event:
                 )
             )
 
+        self.log = []
+
     def add_attendee(self, person: Attendee):
         self.attendees.append(person)
         self.attendees_dict[str(person)] = person
@@ -106,6 +108,7 @@ class Event:
     def get_roomless(self, people: list = None):
         if people is None:
             people = self.attendees
+        people.sort(key=lambda a: a.n_preferences())
         return list(
             filter(
                 lambda p: not p.has_room() and p.needs_room(),
@@ -142,8 +145,9 @@ class Event:
             self.add_gender(p)
         return self.genders
 
-    def assign_to_room(self, room, people: list):
-        people = people.copy()
+    def assign_to_room(self, room, people: list, make_copy: bool = False):
+        if make_copy:
+            people = people.copy()
         people.sort(key=lambda a: a.n_preferences())
         while people and room.n_roommates() < self.min_per_room:
             room.add_roommate(people.pop())
@@ -152,19 +156,24 @@ class Event:
         self.get_genders()
         # First put the minimum people in empty rooms
         rooms = []
+        print("Assigning minimum number of people to empty rooms:")
+        
         for gender, people in self.genders.items():
             roomless = self.get_roomless(people)
             while roomless and not self.all_rooms_full():
                 room = self.next_room()
                 self.assign_to_room(room=room, people=roomless)
-                roomless = self.get_roomless(people)
+                # roomless = self.get_roomless(people)
                 if room not in rooms:
                     rooms.append(room)
+        print("Assigning remaining people to gender-matching rooms:")
         # Then, if there are still people roomless, assign them to rooms matching their gender
         roomless = self.get_roomless()
         for person in roomless:
+            print(f"Searching for rooms for {person}")
             rooms_this = self.rooms.copy()
             rooms_this = list(filter(lambda r: r.single_gender() == person.gender, rooms_this))
+            print("\t Rooms matching gender:", list((map(lambda r: r.id, rooms_this))))
             if rooms_this:
                 room = rooms_this[0]
                 room.add_roommate(person)
@@ -259,6 +268,8 @@ class Event:
                 rooms_full
             )
         )
+        print("\nNumber of attendees:")
+        print(len(self.attendees))
         print("\nNumber of full rooms:")
         print(len(rooms_full))
         print("Number of rooms above capacity:")
