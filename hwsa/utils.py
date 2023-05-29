@@ -1,5 +1,11 @@
 import astropy.io.misc.yaml as yaml
+
 debug = False
+
+
+def debug_print(*args):
+    if debug:
+        print(*args)
 
 
 def sanitise_file_ext(filename: str, ext: str):

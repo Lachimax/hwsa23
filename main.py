@@ -1,4 +1,5 @@
-from hwsa import event
+from hwsa.event import Event
+import hwsa.utils as utils
 
 # TODO: prioritise people with specified preferences, the fewer the earlier
 
@@ -8,8 +9,8 @@ def main(
         d: bool,
         **kwargs
 ):
-    event.debug = d
-    hwsa_2023 = event.Event.from_mq_xl(path=p, output=o, max_per_room=kwargs["n_max"], n_rooms=kwargs["n_rooms"])
+    utils.debug = d
+    hwsa_2023 = Event.from_mq_xl(path=p, output=o, max_per_room=kwargs["n_max"], n_rooms=kwargs["n_rooms"])
     hwsa_2023.allocate_roommates()
     print("\n\n")
     hwsa_2023.show_diets()

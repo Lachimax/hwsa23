@@ -209,13 +209,13 @@ class Event:
         rooms_this = list(filter(condition, rooms_this))
         while not person.has_room() and rooms_this:
             room = self.next_room(rooms_this)
-            debug_print(f"Searching for rooms for {person.room_str()}")
-            debug_print("\t Rooms matching gender:", list((map(lambda r: r.id, rooms_this))))
+            u.debug_print(f"Searching for rooms for {person.room_str()}")
+            u.debug_print("\t Rooms matching gender:", list((map(lambda r: r.id, rooms_this))))
             room.add_roommate(person)
 
             attempts += 1
             if not rooms_this:
-                debug_print(f"Failed to find room for {person.room_str()}")
+                u.debug_print(f"Failed to find room for {person.room_str()}")
             return room
 
     def allocate_roommates(self):
