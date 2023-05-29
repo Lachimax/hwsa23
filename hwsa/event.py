@@ -8,6 +8,10 @@ from hwsa.room import Room
 import hwsa.utils as u
 
 
+
+
+
+
 class Event:
     def __init__(self, **kwargs):
         self.output = "/home/"
@@ -51,7 +55,7 @@ class Event:
         if sort:
             people.sort(key=lambda a: a.name_family)
         for person in people:
-            print("\t", person, person.room, "Needs room:", person.needs_room())
+            print(f"\t{person}, {person.room}, Needs room: {person.needs_room()}", )
 
     def find_name(self, name: str):
         if "(" in name and ")" in name:
@@ -81,9 +85,11 @@ class Event:
             if person.has_nominee():
                 person.roommate_nominee_obj = self.find_name(person.roommate_nominee)
 
-    def next_room(self):
-        self.rooms.sort(key=lambda rm: rm.n_roommates())
-        return self.rooms[0]
+    def next_room(self, rooms: list = None):
+        if rooms is None:
+            rooms = self.rooms.copy()
+        rooms.sort(key=lambda rm: rm.n_roommates())
+        return rooms.pop(0)
 
     def rooms_full(self):
         return list(
@@ -148,7 +154,7 @@ class Event:
     def assign_to_room(self, room, people: list, make_copy: bool = False):
         if make_copy:
             people = people.copy()
-        people.sort(key=lambda a: a.n_preferences())
+        people.sort(key=lambda a: a.n_preferences(), reverse=True)
         while people and room.n_roommates() < self.min_per_room:
             room.add_roommate(people.pop())
 
@@ -156,43 +162,61 @@ class Event:
         self.get_genders()
         # First put the minimum people in empty rooms
         rooms = []
-        print("Assigning minimum number of people to empty rooms:")
-        
-        for gender, people in self.genders.items():
-            roomless = self.get_roomless(people)
-            while roomless and not self.all_rooms_full():
-                room = self.next_room()
-                self.assign_to_room(room=room, people=roomless)
-                # roomless = self.get_roomless(people)
-                if room not in rooms:
-                    rooms.append(room)
-        print("Assigning remaining people to gender-matching rooms:")
+        print("\nAssigning minimum number of people to empty rooms:")
+
+        # The hullabaloo below is to alternate genders so that rooms get assigned fairly evenly between them
+        roomless = self.get_roomless()
+        i = 0
+        gender_keys = tuple(self.genders.keys())
+        while roomless and not self.all_rooms_full() and i < self.n_rooms:
+            n = i % len(self.genders)
+            gender = gender_keys[n]
+            people_gender = self.get_roomless(self.genders[gender])
+            room = self.next_room()
+            # The function below also pops the person from the list, regardless of whether the allocation is successful.
+            self.assign_to_room(room=room, people=people_gender)
+            # roomless = self.get_roomless(people)
+            if room not in rooms:
+                rooms.append(room)
+            i += 1
+        print("\nAssigning remaining people to gender-matching rooms:")
         # Then, if there are still people roomless, assign them to rooms matching their gender
         roomless = self.get_roomless()
         for person in roomless:
-            print(f"Searching for rooms for {person}")
-            rooms_this = self.rooms.copy()
-            rooms_this = list(filter(lambda r: r.single_gender() == person.gender, rooms_this))
-            print("\t Rooms matching gender:", list((map(lambda r: r.id, rooms_this))))
-            if rooms_this:
-                room = rooms_this[0]
-                room.add_roommate(person)
-                if room not in rooms:
-                    rooms.append(room)
+            room = self._assign_by_condition(
+                person,
+                lambda r: r.single_gender() == person.gender
+            )
+            if room not in rooms:
+                rooms.append(room)
         return rooms
 
     def assign_by_preference(self):
         roomless = self.get_roomless()
         rooms = []
         for person in roomless:
-            rooms_this = self.rooms.copy()
-            rooms_this = list(filter(lambda r: r.suitable_for(person), rooms_this))
-            if rooms_this:
-                room = rooms_this[0]
-                room.add_roommate(person)
-                if room not in rooms:
-                    rooms.append(room)
+            room = self._assign_by_condition(
+                person,
+                lambda r: r.suitable_for(person)
+            )
+            if room not in rooms:
+                rooms.append(room)
         return rooms
+
+    def _assign_by_condition(self, person, condition):
+        attempts = 0
+        rooms_this = self.rooms.copy()
+        rooms_this = list(filter(condition, rooms_this))
+        while not person.has_room() and rooms_this:
+            room = self.next_room(rooms_this)
+            debug_print(f"Searching for rooms for {person.room_str()}")
+            debug_print("\t Rooms matching gender:", list((map(lambda r: r.id, rooms_this))))
+            room.add_roommate(person)
+
+            attempts += 1
+            if not rooms_this:
+                debug_print(f"Failed to find room for {person.room_str()}")
+            return room
 
     def allocate_roommates(self):
 
@@ -221,8 +245,8 @@ class Event:
         # Note: Even if someone has multiple or no preferences, have it try to assign to same gender first
         # But prioritise people with specified preferences, the fewer the earlier
 
-        print("\nThe following rooms were assigned based on attendee gender:")
         gendered = self.assign_by_gender()
+        print("\nThe following rooms were assigned based on attendee gender:")
         for r in gendered:
             print(f"{r}:")
             r.print_roommates()
@@ -258,7 +282,7 @@ class Event:
             print("\t", p.room_str())
 
         print()
-        self.print_attendees()
+        self.print_attendees(sort=True)
 
         # Some statistics
         rooms_full = self.rooms_full()
@@ -270,10 +294,12 @@ class Event:
         )
         print("\nNumber of attendees:")
         print(len(self.attendees))
-        print("\nNumber of full rooms:")
+        print("Number of full rooms:")
         print(len(rooms_full))
         print("Number of rooms above capacity:")
         print(len(rooms_overfull))
+        print("Number of non-empty rooms:")
+        print(self.n_rooms - len(self.rooms_empty()))
         print("Number of empty rooms:")
         print(len(self.rooms_empty()))
         print("Max per room:")

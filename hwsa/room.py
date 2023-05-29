@@ -1,5 +1,5 @@
 from hwsa.attendee import Attendee
-
+from hwsa.event import debug_print
 
 class Room:
     def __init__(self, **kwargs):
@@ -26,20 +26,21 @@ class Room:
 
     def add_roommate(self, person: 'Attendee'):
         # Check if the room is already full
-        print("\tChecking room capacity:", self.n_roommates() < self.n_max)
+        debug_print(f"\t Checking {self}")
+        print(f"\t\tChecking room capacity: {self.n_roommates()} / {self.n_max}", self.n_roommates() < self.n_max)
         if self.n_roommates() < self.n_max:
             # Check if it's a real person (None or nan will get passed here sometimes, and we don't want those piling up)
-            print("\tChecking if real person:", isinstance(person, Attendee))
+            print("\t\tChecking if real person:", isinstance(person, Attendee))
             if isinstance(person, Attendee):
                 # Check if room is compatible with person's preferences:
-                print("\tChecking if room is suitable:", self.suitable_for(person))
+                print("\t\tChecking if room is suitable:", self.suitable_for(person))
                 if self.suitable_for(person):
                     person.room = self
                     # Check for duplicates and add the person to this list if not present
-                    print("\tChecking that person is not already in this room:", person not in self.roommates)
+                    print("\t\tChecking that person is not already in this room:", person not in self.roommates)
                     if person not in self.roommates:
                         self.roommates.append(person)
-                        print(f"\t\tAdding {person.room_str()} to {self} ({self.single_gender()})")
+                        print(f"\tAdding {person.room_str()} to {self} ({self.single_gender()})")
 
     def n_roommates(self):
         return len(self.roommates)
@@ -58,6 +59,8 @@ class Room:
         return self.n_roommates() > self.n_max
 
     def single_gender(self):
+        if self.n_roommates() == 0:
+            return True
         gender = self.roommates[0].gender
         for person in self.roommates:
             if person.gender != gender:
@@ -66,6 +69,7 @@ class Room:
 
     def suitable_for(self, person: 'Attendee'):
         for roommate in self.roommates:
+            print(f"\t\t\t Checking compatibility with {roommate.room_str()}:", compatible_roommates(person, roommate))
             if not compatible_roommates(person, roommate):
                 return False
         return True
