@@ -81,9 +81,16 @@ class Event:
     #     return pairs
 
     def _find_nominated(self):
+        with_nominees = []
+        u.debug_print("All with successfully nominated roommates:")
         for person in self.attendees:
             if person.has_nominee():
                 person.roommate_nominee_obj = self.find_name(person.roommate_nominee)
+                if person.roommate_nominee_obj is not None:
+                    with_nominees.append(person)
+                    u.debug_print(f"\t{person.room_str()}")
+        print()
+        return with_nominees
 
     def next_room(self, rooms: list = None):
         if rooms is None:
@@ -124,21 +131,31 @@ class Event:
 
     def assign_nominated(self):
         # Use string nominee to assign Attendee object
-        self._find_nominated()
         rooms = []
-        roomless = self.get_roomless()
-        for person in roomless:
+        people = self._find_nominated()
+        roomless = self.get_roomless(people)
+        while roomless:
+            person = roomless.pop(0)
+            u.debug_print(f"{person.room_str()}: finding room...")
+            u.debug_print(f"\tChecking if they have a room:")
             if person.has_room():
                 room = person.room
+                u.debug_print("\t\tTrue,", str(room))
             else:
                 room = self.next_room()
+                u.debug_print("\t\tFalse, getting next:", str(room))
             nominee = person.roommate_nominee_obj
+            u.debug_print(f"\tFound nominated:", nominee.room_str())
             # Check if enough roommates have already been assigned to the person's room,
             # and if they have nominated each other
+            u.debug_print(f"\tChecking if they have nominated eath other:", nominees_match(person, nominee))
+            u.debug_print(f"\tChecking if person's room is full:", room.full())
             if not room.full() and nominees_match(person, nominee):
-                room.add_roommate(nominee)
+                room.add_roommate(person, override_suitable=True)
+                room.add_roommate(nominee, override_suitable=True)
             if room not in rooms:
                 rooms.append(room)
+            roomless.remove(nominee)
         return rooms
 
     def add_gender(self, person: Attendee):
@@ -221,8 +238,8 @@ class Event:
     def allocate_roommates(self):
 
         # First pass: find people who have nominated each other as roommates and assign them to the same room.
-        print("\nThe following rooms were assigned based on nominees:")
         nominated = self.assign_nominated()
+        print("\nThe following rooms were assigned based on nominees:")
         for r in nominated:
             print(f"{r}:")
             r.print_roommates()
@@ -247,14 +264,18 @@ class Event:
 
         gendered = self.assign_by_gender()
         print("\nThe following rooms were assigned based on attendee gender:")
+        if not gendered:
+            print("None")
         for r in gendered:
             print(f"{r}:")
             r.print_roommates()
 
         # Third pass: assign still-roomless people based on listed preferences
 
-        print("\nThe following rooms were assigned based on gender PREFERENCE:")
         preferred = self.assign_by_preference()
+        print("\nThe following rooms were assigned based on gender PREFERENCE:")
+        if not preferred:
+            print("None")
         for r in preferred:
             print(f"{r}:")
             r.print_roommates()

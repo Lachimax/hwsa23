@@ -24,17 +24,17 @@ class Room:
             )
         )
 
-    def add_roommate(self, person: 'Attendee'):
+    def add_roommate(self, person: 'Attendee', override_suitable=False):
         # Check if the room is already full
         debug_print(f"\t Checking {self}")
-        debug_print(f"\t\tChecking room capacity: {self.n_roommates()} / {self.n_max}", self.n_roommates() < self.n_max)
-        if self.n_roommates() < self.n_max:
+        debug_print(f"\t\tChecking room capacity: {self.n_roommates()} / {self.n_max}", not self.full())
+        if not self.full():
             # Check if it's a real person (None or nan will get passed here sometimes, and we don't want those piling up)
             debug_print("\t\tChecking if real person:", isinstance(person, Attendee))
             if isinstance(person, Attendee):
                 # Check if room is compatible with person's preferences:
                 debug_print("\t\tChecking if room is suitable:", self.suitable_for(person))
-                if self.suitable_for(person):
+                if override_suitable or self.suitable_for(person):
                     person.room = self
                     # Check for duplicates and add the person to this list if not present
                     debug_print("\t\tChecking that person is not already in this room:", person not in self.roommates)
