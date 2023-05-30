@@ -57,7 +57,11 @@ class Attendee:
             return np.inf
 
     def loose_match(self, name: str):
-        return name in str(self)
+        if name in str(self):
+            return True
+        if self.name_family in name and self.name_given in name:
+            return True
+        return False
 
     def has_diet(self):
         return isinstance(self.diet, str) and self.diet != "No specific requirements"
