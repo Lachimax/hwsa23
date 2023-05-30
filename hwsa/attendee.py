@@ -1,8 +1,21 @@
 import numpy as np
 import pandas as pd
 
-
 # from hwsa.room import Room
+
+affiliation_aliases = {
+    "Curtin Institute of Radio Astronomy": "Curtin University",
+    "Curtin Institue of Radio Astronomy": "Curtin University",
+    "ICRAR-UWA": "University of Western Australia",
+    "ICRAR/UWA": "University of Western Australia",
+    "School of Physics - University of Melbourne": "University of Melbourne",
+    "School of Physics, University of Melbourne": "University of Melbourne",
+    "Swinburne University": "Swinburne University of Technology",
+    "University of Melbourne School of Physics": "University of Melbourne",
+    "University of Melbourne, School of Physics": "University of Melbourne",
+    "UNSW": "University of New South Wales",
+    "UNSW Canberra": "University of New South Wales",
+}
 
 
 class Attendee:
@@ -21,9 +34,23 @@ class Attendee:
         self.roommate_nominee_obj = None
         self.room = None
         self.registration_type = None
+        self.affiliation = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+        self.affiliation_entered = None
+
+        if isinstance(self.affiliation, str):
+            self.affiliation_entered = self.affiliation
+            if self.affiliation.startswith("The "):
+                self.affiliation = self.affiliation.replace("The ", "")
+            if "\n" in self.affiliation:
+                self.affiliation = self.affiliation.replace("\n", "")
+            while self.affiliation.endswith(" "):
+                self.affiliation = self.affiliation[:-1]
+        if self.affiliation in affiliation_aliases:
+            self.affiliation = affiliation_aliases[self.affiliation]
 
         if isinstance(self.phone, str):
             if self.phone.startswith("04"):

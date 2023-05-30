@@ -13,6 +13,8 @@ def main(
     hwsa_2023 = Event.from_mq_xl(path=p, output=o, max_per_room=kwargs["n_max"], n_rooms=kwargs["n_rooms"])
     hwsa_2023.allocate_roommates()
     print("\n\n")
+    hwsa_2023.show_affiliations()
+    print("\n\n")
     hwsa_2023.show_diets()
 
 

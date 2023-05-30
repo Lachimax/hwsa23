@@ -23,6 +23,7 @@ class Event:
         self.room_numbers = []
         self.rooms = []
         self.diets = {}
+        self.affiliations = {}
         self.genders = {}
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -343,10 +344,42 @@ class Event:
                 self.diets[person.diet] = []
             self.diets[person.diet].append(person)
 
+    def add_affiliation(self, person: Attendee):
+        if person.affiliation not in self.affiliations:
+            self.affiliations[person.affiliation] = []
+        self.affiliations[person.affiliation].append(person)
+
     def get_diets(self):
         for p in self.attendees:
             self.add_diet(p)
         return self.diets
+
+    def get_affiliations(self):
+        for p in self.attendees:
+            self.add_affiliation(p)
+        return self.diets
+
+    def show_affiliations(self):
+        self.get_affiliations()
+        print("Affiliations:")
+        affil_str = {}
+        affiliations_n = {}
+        affiliation_list = list(self.affiliations.keys())
+        affiliation_list.sort()
+        for affiliation in affiliation_list:
+            people = self.affiliations[affiliation]
+            affil_str[affiliation] = list(map(lambda p: str(p), people))
+            affiliations_n[affiliation] = len(affil_str[affiliation])
+            print(f"\t{affiliation}: {len(people)}")
+            for p in people:
+                print("\t\t", p)
+
+        affiliations = {
+            "People": affil_str,
+            "Numbers": affiliations_n
+        }
+        u.save_params(file=os.path.join(self.output, "affiliation.yaml"), dictionary=affiliations)
+        return affiliations
 
     def show_diets(self):
         self.get_diets()
@@ -375,6 +408,7 @@ class Event:
     def write_attendee_table(self):
         df = self.to_dataframe()
         df.to_csv(os.path.join(self.output, "attendees.csv"))
+
 
     @classmethod
     def from_mq_xl(cls, path: str, **kwargs):
