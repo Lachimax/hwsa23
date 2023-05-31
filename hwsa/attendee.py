@@ -6,15 +6,18 @@ import pandas as pd
 affiliation_aliases = {
     "Curtin Institute of Radio Astronomy": "Curtin University",
     "Curtin Institue of Radio Astronomy": "Curtin University",
+    "Curtin University - Curtin Institute of Radio Astronomy": "Curtin University",
     "ICRAR-UWA": "University of Western Australia",
     "ICRAR/UWA": "University of Western Australia",
     "School of Physics - University of Melbourne": "University of Melbourne",
     "School of Physics, University of Melbourne": "University of Melbourne",
     "Swinburne University": "Swinburne University of Technology",
+    "Sydney University": "University of Sydney",
     "University of Melbourne School of Physics": "University of Melbourne",
     "University of Melbourne, School of Physics": "University of Melbourne",
     "UNSW": "University of New South Wales",
     "UNSW Canberra": "University of New South Wales",
+    "Unviversity of New South Wales": "University of New South Wales",
 }
 
 
@@ -35,6 +38,8 @@ class Attendee:
         self.room = None
         self.registration_type = None
         self.affiliation = None
+        self.email = None
+        self.career_stage = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)

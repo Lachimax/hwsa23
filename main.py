@@ -11,9 +11,13 @@ def main(
 ):
     utils.debug = d
     hwsa_2023 = Event.from_mq_xl(path=p, output=o, max_per_room=kwargs["n_max"], n_rooms=kwargs["n_rooms"])
+    hwsa_2023.check_for_duplicates()
+    print("\n\n")
     hwsa_2023.allocate_roommates()
     print("\n\n")
     hwsa_2023.show_affiliations()
+    print("\n\n")
+    hwsa_2023.show_stages()
     print("\n\n")
     hwsa_2023.show_diets()
 
@@ -39,7 +43,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "--n_max",
         type=int,
-        default=4,
+        default=2,
         help="Max occupants per room"
     )
     parser.add_argument(

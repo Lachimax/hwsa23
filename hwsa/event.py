@@ -8,10 +8,6 @@ from hwsa.room import Room
 import hwsa.utils as u
 
 
-
-
-
-
 class Event:
     def __init__(self, **kwargs):
         self.output = "/home/"
@@ -25,6 +21,7 @@ class Event:
         self.diets = {}
         self.affiliations = {}
         self.genders = {}
+        self.career_stages = {}
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -156,7 +153,8 @@ class Event:
                 room.add_roommate(nominee, override_suitable=True)
             if room not in rooms:
                 rooms.append(room)
-            roomless.remove(nominee)
+            if nominee in roomless:
+                roomless.remove(nominee)
         return rooms
 
     def add_gender(self, person: Attendee):
@@ -180,7 +178,7 @@ class Event:
         self.get_genders()
         # First put the minimum people in empty rooms
         rooms = []
-        print("\nAssigning minimum number of people to empty rooms:")
+        u.debug_print("\nAssigning minimum number of people to empty rooms:")
 
         # The hullabaloo below is to alternate genders so that rooms get assigned fairly evenly between them
         roomless = self.get_roomless()
@@ -197,7 +195,7 @@ class Event:
             if room not in rooms:
                 rooms.append(room)
             i += 1
-        print("\nAssigning remaining people to gender-matching rooms:")
+        u.debug_print("\nAssigning remaining people to gender-matching rooms:")
         # Then, if there are still people roomless, assign them to rooms matching their gender
         roomless = self.get_roomless()
         for person in roomless:
@@ -240,7 +238,7 @@ class Event:
 
         # First pass: find people who have nominated each other as roommates and assign them to the same room.
         nominated = self.assign_nominated()
-        print("\nThe following rooms were assigned based on nominees:")
+        print("\nThe following rooms were assigned based on nominated roommates:")
         for r in nominated:
             print(f"{r}:")
             r.print_roommates()
@@ -295,11 +293,15 @@ class Event:
                 self.attendees
             )
         )
+        if not prefs_not_own:
+            print("None")
         for p in prefs_not_own:
             print("\t", p.room_str())
 
         print("\nThe following attendees have not been assigned rooms:")
         roomless = self.get_roomless()
+        if not roomless:
+            print("None")
         for p in roomless:
             print("\t", p.room_str())
 
@@ -349,9 +351,19 @@ class Event:
             self.affiliations[person.affiliation] = []
         self.affiliations[person.affiliation].append(person)
 
+    def add_stage(self, person: Attendee):
+        if person.career_stage not in self.career_stages:
+            self.career_stages[person.career_stage] = []
+        self.career_stages[person.career_stage].append(person)
+
     def get_diets(self):
         for p in self.attendees:
             self.add_diet(p)
+        return self.diets
+
+    def get_stages(self):
+        for p in self.attendees:
+            self.add_stage(p)
         return self.diets
 
     def get_affiliations(self):
@@ -359,46 +371,41 @@ class Event:
             self.add_affiliation(p)
         return self.diets
 
-    def show_affiliations(self):
+    def _show_property(self, property_dict: dict, output_name: str, show_all: bool = False):
+        str_dict = {}
+        numbers = {}
+        property_list = list(property_dict.keys())
+        property_list.sort()
+        for property_name in property_list:
+            people = property_dict[property_name]
+            str_dict[property_name] = list(map(lambda p: str(p), people))
+            numbers[property_name] = len(str_dict[property_name])
+            print(f"\t{property_name}: {len(people)}")
+            if show_all:
+                for p in people:
+                    print("\t\t", p)
+
+        write_dict = {
+            "People": str_dict,
+            "Numbers": numbers
+        }
+        u.save_params(file=os.path.join(self.output, f"{output_name}.yaml"), dictionary=write_dict)
+        return write_dict
+
+    def show_stages(self, show_all: bool = False):
+        self.get_stages()
+        print("Career Stages:")
+        return self._show_property(output_name="career_stages", show_all=show_all, property_dict=self.career_stages)
+
+    def show_affiliations(self, show_all: bool = False):
         self.get_affiliations()
         print("Affiliations:")
-        affil_str = {}
-        affiliations_n = {}
-        affiliation_list = list(self.affiliations.keys())
-        affiliation_list.sort()
-        for affiliation in affiliation_list:
-            people = self.affiliations[affiliation]
-            affil_str[affiliation] = list(map(lambda p: str(p), people))
-            affiliations_n[affiliation] = len(affil_str[affiliation])
-            print(f"\t{affiliation}: {len(people)}")
-            for p in people:
-                print("\t\t", p)
+        return self._show_property(output_name="affiliations", show_all=show_all, property_dict=self.affiliations)
 
-        affiliations = {
-            "People": affil_str,
-            "Numbers": affiliations_n
-        }
-        u.save_params(file=os.path.join(self.output, "affiliation.yaml"), dictionary=affiliations)
-        return affiliations
-
-    def show_diets(self):
+    def show_diets(self, show_all: bool = True):
         self.get_diets()
         print("Dietary Requirements:")
-        diets_str = {}
-        diets_n = {}
-        for diet, people in self.diets.items():
-            diets_str[diet] = list(map(lambda p: str(p), people))
-            diets_n[diet] = len(diets_str[diet])
-            print(f"\t{diet}: {len(people)}")
-            for p in people:
-                print("\t\t", p)
-
-        diets_write = {
-            "People": diets_str,
-            "Numbers": diets_n
-        }
-        u.save_params(file=os.path.join(self.output, "diet.yaml"), dictionary=diets_write)
-        return diets_write
+        return self._show_property(output_name="diet", show_all=show_all, property_dict=self.diets)
 
     def to_dataframe(self):
         attendee_dicts = list(map(lambda a: a.__dict__, self.attendees))
@@ -409,6 +416,33 @@ class Event:
         df = self.to_dataframe()
         df.to_csv(os.path.join(self.output, "attendees.csv"))
 
+    def check_for_duplicates(self, show=True):
+        possible = []
+        confirmed = []
+        self.attendees.sort(key=lambda p: p.name_family)
+        for person in self.attendees:
+            for other in self.attendees:
+                if other is not person and other.loose_match(f"{person.name_given} {person.name_family}"):
+                    if other.email == person.email:
+                        confirmed.append((person, other))
+                        self.attendees.remove(other)
+                    else:
+                        possible.append((person, other))
+
+        if show:
+            print("\nPossible duplicates:")
+            if not possible:
+                print("None")
+            for p1, p2 in possible:
+                print(f"\t{p1} of {p2}")
+
+            print("\nConfirmed duplicates (removed automatically):")
+            if not confirmed:
+                print("None")
+            for p1, p2 in confirmed:
+                print(f"\t{p1} of {p2}")
+
+        return possible, confirmed
 
     @classmethod
     def from_mq_xl(cls, path: str, **kwargs):
@@ -443,5 +477,10 @@ def nominees_match(person_1: 'Attendee', person_2: 'Attendee'):
     # Sometimes Nones or nans will make it in here, for example if a person has no nominee, so we return False
     if not isinstance(person_1, Attendee) or not isinstance(person_2, Attendee):
         return False
-    # Otherwise, we check if the nominees of the pair are each other
-    return person_1.roommate_nominee_obj is person_2 and person_2.roommate_nominee_obj is person_1
+    if person_1.roommate_nominee_obj is person_2:
+        # Otherwise, we check if the nominees of the pair are each other
+        if person_2.roommate_nominee_obj is person_1:
+            return True
+        # Sometimes only one will nominate the other; if the other has not nominated anyone, then we allow this to go through
+        elif not person_2.has_nominee():
+            return True
