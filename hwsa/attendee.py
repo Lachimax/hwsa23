@@ -12,6 +12,7 @@ affiliation_aliases = {
     "School of Physics - University of Melbourne": "University of Melbourne",
     "School of Physics, University of Melbourne": "University of Melbourne",
     "Swinburne University": "Swinburne University of Technology",
+    "SWINBURNE UNIVERSITY OF TECHNOLOGY": "Swinburne University of Technology",
     "Sydney University": "University of Sydney",
     "University of Melbourne School of Physics": "University of Melbourne",
     "University of Melbourne, School of Physics": "University of Melbourne",
