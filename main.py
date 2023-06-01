@@ -20,6 +20,8 @@ def main(
     hwsa_2023.show_stages()
     print("\n\n")
     hwsa_2023.show_diets()
+    print("\n\n")
+    hwsa_2023.show_accessibility()
 
 
 if __name__ == '__main__':

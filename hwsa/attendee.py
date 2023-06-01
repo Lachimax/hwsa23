@@ -41,6 +41,7 @@ class Attendee:
         self.affiliation = None
         self.email = None
         self.career_stage = None
+        self.accessibility = None
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -157,5 +158,6 @@ class Attendee:
             amount_outstanding=float(row.pop("Amount Outstanding")),
             amount_required=float(row.pop("Amount Required")),
             registered=pd.to_datetime(row.pop("Date Registered")),
+            # accessibility=row.pop("Marketing - Accessibility")
             **row
         )

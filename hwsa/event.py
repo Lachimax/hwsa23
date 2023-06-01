@@ -22,6 +22,7 @@ class Event:
         self.affiliations = {}
         self.genders = {}
         self.career_stages = {}
+        self.accessibility = {}
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -351,6 +352,13 @@ class Event:
             self.affiliations[person.affiliation] = []
         self.affiliations[person.affiliation].append(person)
 
+    def add_accessibility(self, person: Attendee):
+        if isinstance(person.accessibility, str) :
+            if person.accessibility not in self.accessibility:
+                self.accessibility[person.accessibility] = []
+            self.accessibility[person.accessibility].append(person)
+
+
     def add_stage(self, person: Attendee):
         if person.career_stage not in self.career_stages:
             self.career_stages[person.career_stage] = []
@@ -370,6 +378,11 @@ class Event:
         for p in self.attendees:
             self.add_affiliation(p)
         return self.diets
+
+    def get_accessibility(self):
+        for p in self.attendees:
+            self.add_accessibility(p)
+        return self.accessibility
 
     def _show_property(self, property_dict: dict, output_name: str, show_all: bool = False):
         str_dict = {}
@@ -406,6 +419,12 @@ class Event:
         self.get_diets()
         print("Dietary Requirements:")
         return self._show_property(output_name="diet", show_all=show_all, property_dict=self.diets)
+
+    def show_accessibility(self, show_all: bool = True):
+        self.get_accessibility()
+        print("Accessibility Requirements:")
+        return self._show_property(output_name="accessibility", show_all=show_all, property_dict=self.accessibility)
+
 
     def to_dataframe(self):
         attendee_dicts = list(map(lambda a: a.__dict__, self.attendees))
