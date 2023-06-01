@@ -132,6 +132,7 @@ class Event:
         # Use string nominee to assign Attendee object
         rooms = []
         people = self._find_nominated()
+        print(f"\n{len(people)} attendees have nominated a roommate.")
         roomless = self.get_roomless(people)
         while roomless:
             person = roomless.pop(0)
@@ -331,6 +332,12 @@ class Event:
         print(self.max_per_room)
         print("Min per room:")
         print(self.min_per_room)
+
+        print("\nNumber of people who have said that:")
+
+        print("\tThey have nominated a roommate:", sum(map(lambda p: p.will_nominate == "now", self.attendees)))
+        print("\tThey will nominate a roommate later:", sum(map(lambda p: p.will_nominate == "later", self.attendees)))
+        print("\tThey need a roommate allocated:", sum(map(lambda p: p.will_nominate == "no", self.attendees)))
 
         self.write_rooms()
         self.write_attendee_table()

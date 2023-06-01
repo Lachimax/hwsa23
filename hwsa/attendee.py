@@ -36,6 +36,7 @@ class Attendee:
         self.room_preferences = []
         self.roommate_nominee = None
         self.roommate_nominee_obj = None
+        self.will_nominate = None
         self.room = None
         self.registration_type = None
         self.affiliation = None
@@ -58,6 +59,13 @@ class Attendee:
                 self.affiliation = self.affiliation[:-1]
         if self.affiliation in affiliation_aliases:
             self.affiliation = affiliation_aliases[self.affiliation]
+
+        if isinstance(self.will_nominate, str):
+            self.will_nominate = {
+                "No roommate nomination. Please allocate one to me.": "no",
+                "Nominate a roommate": "now",
+                "Will nominate someone later": "later"
+            }[self.will_nominate]
 
         if isinstance(self.phone, str):
             if self.phone.startswith("04"):
@@ -151,6 +159,7 @@ class Attendee:
             gender=row.pop("Marketing - Gender Identity"),
             room_preferences=room_preferences,
             roommate_nominee=row.pop("Marketing - Nominated roommate"),
+            will_nominate=row.pop("Marketing - Would you like to nominate a roommate?"),
             affiliation=row.pop("Marketing - Primary Affiliation"),
             research_types=research_types,
             research_topic=row.pop("Marketing - Your Research/Thesis Topic"),
