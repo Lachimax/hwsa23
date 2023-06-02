@@ -45,7 +45,8 @@ class Attendee:
         self.accessibility = None
 
         for key, value in kwargs.items():
-            setattr(self, key, value)
+            if value not in (np.nan, "na"):
+                setattr(self, key, value)
 
         self.affiliation_entered = None
 
