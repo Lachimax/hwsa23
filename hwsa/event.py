@@ -162,7 +162,8 @@ class Event:
     def add_gender(self, person: Attendee):
         if person.gender not in self.genders:
             self.genders[person.gender] = []
-        self.genders[person.gender].append(person)
+        if person not in self.genders[person.gender]:
+            self.genders[person.gender].append(person)
 
     def get_genders(self):
         for p in self.attendees:
@@ -351,26 +352,36 @@ class Event:
         u.save_params(os.path.join(self.output, "rooms.yaml"), room_dict)
 
     def add_diet(self, person: Attendee):
-        if person.has_diet():
-            if person.diet not in self.diets:
-                self.diets[person.diet] = []
-            self.diets[person.diet].append(person)
+        _add_property(
+            person=person,
+            prop=person.diet,
+            property_dict=self.diets,
+            type_expect=str
+        )
 
     def add_affiliation(self, person: Attendee):
-        if person.affiliation not in self.affiliations:
-            self.affiliations[person.affiliation] = []
-        self.affiliations[person.affiliation].append(person)
+        _add_property(
+            person=person,
+            prop=person.affiliation,
+            property_dict=self.affiliations,
+            type_expect=str
+        )
 
     def add_accessibility(self, person: Attendee):
-        if isinstance(person.accessibility, str):
-            if person.accessibility not in self.accessibility:
-                self.accessibility[person.accessibility] = []
-            self.accessibility[person.accessibility].append(person)
+        _add_property(
+            person=person,
+            prop=person.accessibility,
+            property_dict=self.accessibility,
+            type_expect=str
+        )
 
     def add_stage(self, person: Attendee):
-        if person.career_stage not in self.career_stages:
-            self.career_stages[person.career_stage] = []
-        self.career_stages[person.career_stage].append(person)
+        _add_property(
+            person=person,
+            prop=person.career_stage,
+            property_dict=self.career_stages,
+            type_expect=str
+        )
 
     def get_diets(self):
         for p in self.attendees:
@@ -515,3 +526,11 @@ def nominees_match(person_1: 'Attendee', person_2: 'Attendee'):
         # Sometimes only one will nominate the other; if the other has not nominated anyone, then we allow this to go through
         elif not person_2.has_nominee():
             return True
+
+
+def _add_property(person: Attendee, prop, property_dict: dict, type_expect=str):
+    if isinstance(prop, type_expect):
+        if prop not in property_dict:
+            property_dict[prop] = []
+        if person not in property_dict[prop]:
+            property_dict[prop].append(person)
