@@ -320,6 +320,8 @@ class Event:
         )
         print("\nNumber of attendees:")
         print(len(self.attendees))
+        print("Number of attendees requiring rooms:")
+        print(sum(map(lambda p: p.needs_room(), self.attendees)))
         print("Number of full rooms:")
         print(len(rooms_full))
         print("Number of rooms above capacity:")
@@ -360,11 +362,10 @@ class Event:
         self.affiliations[person.affiliation].append(person)
 
     def add_accessibility(self, person: Attendee):
-        if isinstance(person.accessibility, str) :
+        if isinstance(person.accessibility, str):
             if person.accessibility not in self.accessibility:
                 self.accessibility[person.accessibility] = []
             self.accessibility[person.accessibility].append(person)
-
 
     def add_stage(self, person: Attendee):
         if person.career_stage not in self.career_stages:
@@ -432,6 +433,10 @@ class Event:
         print("Accessibility Requirements:")
         return self._show_property(output_name="accessibility", show_all=show_all, property_dict=self.accessibility)
 
+    def show_genders(self, show_all: bool = False):
+        self.get_genders()
+        print("Gender mix:")
+        return self._show_property(output_name="gender", show_all=show_all, property_dict=self.genders)
 
     def to_dataframe(self):
         attendee_dicts = list(map(lambda a: a.__dict__, self.attendees))

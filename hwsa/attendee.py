@@ -167,6 +167,6 @@ class Attendee:
             amount_outstanding=float(row.pop("Amount Outstanding")),
             amount_required=float(row.pop("Amount Required")),
             registered=pd.to_datetime(row.pop("Date Registered")),
-            # accessibility=row.pop("Marketing - Accessibility")
+            accessibility=row.pop("Marketing - Accessibility"),
             **row
         )

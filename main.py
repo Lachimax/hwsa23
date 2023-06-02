@@ -22,6 +22,8 @@ def main(
     hwsa_2023.show_diets()
     print("\n\n")
     hwsa_2023.show_accessibility()
+    print("\n\n")
+    hwsa_2023.show_genders()
 
 
 if __name__ == '__main__':
