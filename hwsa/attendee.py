@@ -1,5 +1,9 @@
+import os.path
+
 import numpy as np
 import pandas as pd
+
+import hwsa.utils as u
 
 # from hwsa.room import Room
 
@@ -9,6 +13,7 @@ affiliation_aliases = {
     "Curtin University - Curtin Institute of Radio Astronomy": "Curtin University",
     "ICRAR-UWA": "University of Western Australia",
     "ICRAR/UWA": "University of Western Australia",
+    "Research School of Astronomy & Astrophysics, ANU": "Australian National University",
     "School of Physics - University of Melbourne": "University of Melbourne",
     "School of Physics, University of Melbourne": "University of Melbourne",
     "Swinburne University": "Swinburne University of Technology",
@@ -43,12 +48,16 @@ class Attendee:
         self.email = None
         self.career_stage = None
         self.accessibility = None
+        self.event = None
 
         for key, value in kwargs.items():
             if value not in (np.nan, "na"):
                 setattr(self, key, value)
 
         self.affiliation_entered = None
+
+        if not isinstance(self.diet, str) or self.diet == "No specific requirements":
+            self.diet = None
 
         if isinstance(self.affiliation, str):
             self.affiliation_entered = self.affiliation
@@ -78,6 +87,10 @@ class Attendee:
         while "No preference" in self.room_preferences:
             self.room_preferences.remove("No preference")
 
+        self.update_manual()
+
+        self.name_str = str(self)
+
     def __str__(self):
         return f"{self.id} {self.name_given} {self.name_family}"
 
@@ -86,6 +99,12 @@ class Attendee:
 
     def __hash__(self):
         return hash(str(self))
+
+    def update_manual(self):
+        if self.event is not None:
+            manual_path = os.path.join(self.event.output, "attendees_manual", self.filename() + ".yaml")
+            if os.path.isfile(manual_path):
+                self.__dict__.update(u.load_params(manual_path))
 
     def room_str(self):
         return f"{self} (gender {self.gender}; nominated {self.roommate_nominee}; room preferences {self.room_preferences})"
@@ -130,8 +149,19 @@ class Attendee:
             return 0
         return len(self.room.roommates)
 
+    def to_yaml(self):
+        a_dict = self.__dict__.copy()
+        for key, value in a_dict.items():
+            if not isinstance(value, (float, int, str, list)):
+                value = str(value)
+                a_dict[key] = value
+        return a_dict
+
+    def filename(self):
+        return str(self).replace(" ", "_")
+
     @classmethod
-    def from_mq_xl_row(cls, row: 'pandas.core.series.Series'):
+    def from_mq_xl_row(cls, row: 'pandas.core.series.Series', event=None):
         other_str = "Marketing - Academic Career stage (other)"
         if other_str in row and isinstance(row[other_str], str):
             career = row[other_str]
@@ -169,5 +199,6 @@ class Attendee:
             amount_required=float(row.pop("Amount Required")),
             registered=pd.to_datetime(row.pop("Date Registered")),
             accessibility=row.pop("Marketing - Accessibility"),
+            event=event,
             **row
         )

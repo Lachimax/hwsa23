@@ -18,6 +18,7 @@ class Event:
         self.attendees_dict = {}
         self.room_numbers = []
         self.rooms = []
+        self.rooms_dict = {}
         self.diets = {}
         self.affiliations = {}
         self.genders = {}
@@ -33,12 +34,16 @@ class Event:
             self.n_rooms = len(self.room_numbers)
 
         for n in self.room_numbers:
-            self.rooms.append(
-                Room(
-                    id=n,
-                    n_max=self.max_per_room
-                )
+            room = Room(
+                id=n,
+                n_max=self.max_per_room,
+                event=self
             )
+
+            self.rooms.append(
+                room
+            )
+            self.rooms_dict[room] = room
 
         self.log = []
 
@@ -238,6 +243,9 @@ class Event:
             return room
 
     def allocate_roommates(self):
+        # Zeroth pass: ingest rooms that have been assigned manually
+        for room in self.rooms:
+            room.update_manual()
 
         # First pass: find people who have nominated each other as roommates and assign them to the same room.
         nominated = self.assign_nominated()
@@ -343,13 +351,25 @@ class Event:
         print("\tThey need a roommate allocated:", sum(map(lambda p: p.will_nominate == "no", self.attendees)))
 
         self.write_rooms()
+        self.write_room_yamls()
         self.write_attendee_table()
+        self.write_attendee_yamls()
 
     def write_rooms(self):
         room_dict = {}
         for room in self.rooms:
             room_dict[room.id] = room.list_roommates()
         u.save_params(os.path.join(self.output, "rooms.yaml"), room_dict)
+
+    def write_room_yamls(self):
+        yaml_dir = os.path.join(self.output, "rooms")
+        u.mkdir_check(yaml_dir)
+        for p in self.rooms:
+            yml = p.to_yaml()
+            u.save_params(
+                os.path.join(yaml_dir, p.filename()),
+                yml
+            )
 
     def add_diet(self, person: Attendee):
         _add_property(
@@ -408,10 +428,12 @@ class Event:
         numbers = {}
         property_list = list(property_dict.keys())
         property_list.sort()
+        n_with = 0
         for property_name in property_list:
             people = property_dict[property_name]
             str_dict[property_name] = list(map(lambda p: str(p), people))
             numbers[property_name] = len(str_dict[property_name])
+            n_with += numbers[property_name]
             print(f"\t{property_name}: {len(people)}")
             if show_all:
                 for p in people:
@@ -419,7 +441,9 @@ class Event:
 
         write_dict = {
             "People": str_dict,
-            "Numbers": numbers
+            "Numbers": numbers,
+            "n_distinct": len(numbers),
+            "n_with": n_with
         }
         u.save_params(file=os.path.join(self.output, f"{output_name}.yaml"), dictionary=write_dict)
         return write_dict
@@ -437,7 +461,10 @@ class Event:
     def show_diets(self, show_all: bool = True):
         self.get_diets()
         print("Dietary Requirements:")
-        return self._show_property(output_name="diet", show_all=show_all, property_dict=self.diets)
+        info = self._show_property(output_name="diet", show_all=show_all, property_dict=self.diets)
+        print(f"\n{info['n_distinct']} distinct dietary requirements.")
+        print(f"{info['n_with']} total attendees with dietary requirements.")
+        return info
 
     def show_accessibility(self, show_all: bool = True):
         self.get_accessibility()
@@ -457,6 +484,16 @@ class Event:
     def write_attendee_table(self):
         df = self.to_dataframe()
         df.to_csv(os.path.join(self.output, "attendees.csv"))
+
+    def write_attendee_yamls(self):
+        yaml_dir = os.path.join(self.output, "attendees")
+        u.mkdir_check(yaml_dir)
+        for p in self.attendees:
+            yml = p.to_yaml()
+            u.save_params(
+                os.path.join(yaml_dir, p.filename()),
+                yml
+            )
 
     def check_for_duplicates(self, show=True):
         possible = []
@@ -509,7 +546,7 @@ class Event:
 
         event = Event(**kwargs)
         for row in xl_mod.iloc:
-            person = Attendee.from_mq_xl_row(row=row)
+            person = Attendee.from_mq_xl_row(row=row, event=event)
             event.add_attendee(person=person)
 
         return event

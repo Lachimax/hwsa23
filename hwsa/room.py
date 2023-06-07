@@ -1,16 +1,36 @@
+import os
+
 from hwsa.attendee import Attendee
-from hwsa.utils import debug_print
+from hwsa.utils import debug_print, load_params
+
 
 class Room:
     def __init__(self, **kwargs):
         self.roommates = []
         self.n_max = 2
         self.id = None
+        self.event = None
         for key, value in kwargs.items():
             setattr(self, key, value)
 
     def __str__(self):
         return f"Room {self.id}"
+
+    def __hash__(self):
+        return hash(str(self))
+
+    def update_manual(self):
+        debug_print(f"Attempting manual update for {self}...")
+        if self.event is not None:
+            manual_path = os.path.join(self.event.output, "rooms_manual", self.filename() + ".yaml")
+            if os.path.isfile(manual_path):
+                print(f"Manually setting roommates for {self}")
+                yml = load_params(manual_path)
+                roommates = yml["roommates"]
+                for p_id in roommates:
+                    if p_id in self.event.attendees_dict:
+                        p = self.event.attendees_dict[p_id]
+                        self.add_roommate(p, override_suitable=True)
 
     def print_roommates(self):
         for p in self.roommates:
@@ -69,10 +89,23 @@ class Room:
 
     def suitable_for(self, person: 'Attendee'):
         for roommate in self.roommates:
-            debug_print(f"\t\t\t Checking compatibility with {roommate.room_str()}:", compatible_roommates(person, roommate))
+            debug_print(f"\t\t\t Checking compatibility with {roommate.room_str()}:",
+                        compatible_roommates(person, roommate))
             if not compatible_roommates(person, roommate):
                 return False
         return True
+
+    def to_yaml(self):
+        a_dict = self.__dict__.copy()
+        for key, value in a_dict.items():
+            if not isinstance(value, (float, int, str)):
+                value = str(value)
+                a_dict[key] = value
+        a_dict["roommates"] = list(map(lambda p: str(p), self.roommates))
+        return a_dict
+
+    def filename(self):
+        return str(self).replace(" ", "_")
 
 
 def compatible_roommates(person_1: 'Attendee', person_2: 'Attendee'):
