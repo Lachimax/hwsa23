@@ -21,15 +21,21 @@ class Room:
 
     def update_manual(self):
         debug_print(f"Attempting manual update for {self}...")
+
         if self.event is not None:
             manual_path = os.path.join(self.event.output, "rooms_manual", self.filename() + ".yaml")
+            debug_print("\t", manual_path)
             if os.path.isfile(manual_path):
-                print(f"Manually setting roommates for {self}")
                 yml = load_params(manual_path)
-                roommates = yml["roommates"]
+                print(f"Manually setting roommates for {self}:")
+                roommates = yml.pop("roommates")
+                if "event" in yml:
+                    yml.pop("event")
+                self.__dict__.update(yml)
                 for p_id in roommates:
                     if p_id in self.event.attendees_dict:
                         p = self.event.attendees_dict[p_id]
+                        print("\t", p.room_str())
                         self.add_roommate(p, override_suitable=True)
 
     def print_roommates(self):
