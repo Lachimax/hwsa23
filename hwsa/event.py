@@ -434,7 +434,7 @@ class Event:
             str_dict[property_name] = list(map(lambda p: str(p), people))
             numbers[property_name] = len(str_dict[property_name])
             n_with += numbers[property_name]
-            print(f"\t{property_name}: {len(people)}")
+            print(f"\t{property_name}: {len(people)} ({np.round(len(people) * 100 / len(self.attendees), 1)} %)")
             if show_all:
                 for p in people:
                     print("\t\t", p)
