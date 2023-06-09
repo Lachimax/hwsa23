@@ -15,6 +15,7 @@ affiliation_aliases = {
     "ICRAR/UWA": "University of Western Australia",
     "Macquarrie University": "Macquarie University",
     "Research School of Astronomy & Astrophysics, ANU": "Australian National University",
+    "Research School of Astronomy and Astrophysics, ANU": "Australian National University",
     "School of Physics - University of Melbourne": "University of Melbourne",
     "School of Physics, University of Melbourne": "University of Melbourne",
     "Swinburne University": "Swinburne University of Technology",
