@@ -13,6 +13,7 @@ affiliation_aliases = {
     "Curtin University - Curtin Institute of Radio Astronomy": "Curtin University",
     "ICRAR-UWA": "University of Western Australia",
     "ICRAR/UWA": "University of Western Australia",
+    "Macquarrie University": "Macquarie University",
     "Research School of Astronomy & Astrophysics, ANU": "Australian National University",
     "School of Physics - University of Melbourne": "University of Melbourne",
     "School of Physics, University of Melbourne": "University of Melbourne",
@@ -52,12 +53,14 @@ class Attendee:
 
         for key, value in kwargs.items():
             if value not in (np.nan, "na"):
+                if isinstance(value, str):
+                    value = value.replace("\n", "")
                 setattr(self, key, value)
-
-        self.affiliation_entered = None
 
         if not isinstance(self.diet, str) or self.diet == "No specific requirements":
             self.diet = None
+
+        self.affiliation_entered = None
 
         if isinstance(self.affiliation, str):
             self.affiliation_entered = self.affiliation
