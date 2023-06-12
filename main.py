@@ -35,7 +35,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "-p",
         type=str,
-        default="/home/lachlan/Data/hwsa/Comprehensive report_d0836c81-5fb7-48c7-9e47-9338326a5831.xlsx",
+        default="/home/lachlan/Data/hwsa/Comprehensive report_912e9971-7fb3-4170-9fdb-d731569457e5.xlsx",
         help="Path to Macquarie-generated XLSX of attendees"
     )
     parser.add_argument(
