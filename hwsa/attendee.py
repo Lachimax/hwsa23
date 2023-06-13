@@ -51,6 +51,7 @@ class Attendee:
         self.career_stage = None
         self.accessibility = None
         self.event = None
+        self.loc = False
 
         for key, value in kwargs.items():
             if value not in (np.nan, "na"):
@@ -103,6 +104,9 @@ class Attendee:
 
     def __hash__(self):
         return hash(str(self))
+
+    def full_name(self):
+        return f"{self.name_given} {self.name_family}"
 
     def update_manual(self):
         if self.event is not None:
@@ -165,12 +169,19 @@ class Attendee:
         return str(self).replace(" ", "_")
 
     @classmethod
+    def from_yaml(cls, path: str):
+        _, filename = os.path.split(path)
+        yaml = u.load_params(path)
+        return Attendee(**yaml)
+
+    @classmethod
     def from_mq_xl_row(cls, row: 'pandas.core.series.Series', event=None):
         other_str = "Marketing - Academic Career stage (other)"
         if other_str in row and isinstance(row[other_str], str):
-            career = row[other_str]
+            career = row.pop(other_str)
+            row.pop("Marketing - Current Academic/Career Stage")
         else:
-            career = row["Marketing - Current Academic/Career Stage"]
+            career = row.pop("Marketing - Current Academic/Career Stage")
 
         room_preferences = []
         research_types = []
@@ -178,9 +189,16 @@ class Attendee:
         research_str = "Marketing - Your Research/Thesis Technique"
         for name in row.index:
             if name.startswith(room_str) and isinstance(row[name], str):
-                room_preferences.append((row[name]))
+                room_preferences.append(row.pop(name))
             if name.startswith(research_str) and isinstance(row[name], str):
-                research_types.append(row[name])
+                research_types.append(row.pop(name))
+
+        other_research_string = "Marketing - Other Research/Thesis Technique"
+        research_types.append(row.pop(other_research_string))
+
+        loc = False
+        if "LOC" in row and row["LOC"] == "Y":
+            loc = True
 
         return Attendee(
             id=row.pop("ID"),
@@ -196,13 +214,16 @@ class Attendee:
             roommate_nominee=row.pop("Marketing - Nominated roommate"),
             will_nominate=row.pop("Marketing - Would you like to nominate a roommate?"),
             affiliation=row.pop("Marketing - Primary Affiliation"),
+            other_affiliations=row.pop("Marketing - Other Affiliations (if applicable)"),
             research_types=research_types,
             research_topic=row.pop("Marketing - Your Research/Thesis Topic"),
+            other_research_topic=row.pop("Marketing - Other Research/Thesis Topic"),
             registration_type=row.pop("Registration Type - Name"),
             amount_outstanding=float(row.pop("Amount Outstanding")),
             amount_required=float(row.pop("Amount Required")),
             registered=pd.to_datetime(row.pop("Date Registered")),
             accessibility=row.pop("Marketing - Accessibility"),
+            loc=loc,
             event=event,
             **row
         )

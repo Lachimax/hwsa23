@@ -40,12 +40,12 @@ class Room:
 
     def print_roommates(self):
         for p in self.roommates:
-            print("\t", p.room_str())
+            print(p.full_name())
 
     def list_roommates(self):
         return list(
             map(
-                lambda p: str(p),
+                lambda p: p.full_name(),
                 self.roommates
             )
         )

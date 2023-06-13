@@ -27,6 +27,12 @@ class Event:
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+        # attendee_yaml_dir = os.path.join(self.output, "attendees_manual")
+        # for file in os.listdir(attendee_yaml_dir):
+        #     person = Attendee.from_yaml(os.path.join(attendee_yaml_dir, file))
+        #     if str(person) not in self.attendees_dict:
+        #         self.add_attendee(person)
+
         if not self.room_numbers:
             self.room_numbers = list(range(1, self.n_rooms + 1))
 
@@ -251,7 +257,7 @@ class Event:
         nominated = self.assign_nominated()
         print("\nThe following rooms were assigned based on nominated roommates:")
         for r in nominated:
-            print(f"{r}:")
+            print(f"\n{r}:")
             r.print_roommates()
 
         print("\nThe following attendees have nominated roommates but have not been assigned them:")
@@ -277,7 +283,7 @@ class Event:
         if not gendered:
             print("None")
         for r in gendered:
-            print(f"{r}:")
+            print(f"\n{r}:")
             r.print_roommates()
 
         # Third pass: assign still-roomless people based on listed preferences
@@ -287,14 +293,14 @@ class Event:
         if not preferred:
             print("None")
         for r in preferred:
-            print(f"{r}:")
+            print(f"\n{r}:")
             r.print_roommates()
 
         print("\nAll rooms:")
         self.rooms.sort(key=lambda r: r.id)
         for r in self.rooms:
             if not r.empty():
-                print(r)
+                print(f"\n{r}:")
                 r.print_roommates()
 
         print("\nThe following attendees did not list their own gender in the 'comfortable with' field:")
@@ -431,7 +437,7 @@ class Event:
         n_with = 0
         for property_name in property_list:
             people = property_dict[property_name]
-            str_dict[property_name] = list(map(lambda p: str(p), people))
+            str_dict[property_name] = list(map(lambda p: str(p), filter(lambda p: not p.loc, people)))
             numbers[property_name] = len(str_dict[property_name])
             n_with += numbers[property_name]
             print(f"\t{property_name}: {len(people)} ({np.round(len(people) * 100 / len(self.attendees), 1)} %)")
