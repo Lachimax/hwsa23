@@ -360,6 +360,28 @@ class Event:
         self.write_room_yamls()
         self.write_attendee_table()
         self.write_attendee_yamls()
+        self.generate_roommate_emails()
+
+    def generate_roommate_emails(
+            self,
+            template_path: str = None,
+            rm_line=None,
+            no_rm_line=None,
+            output_dir: str = None
+    ):
+        if template_path is None:
+            template_path = os.path.join(self.output, "roommate_email_template.txt")
+        output_dir = os.path.join(self.output, "roommate_emails")
+        u.mkdir_check(output_dir)
+        with open(template_path, "r") as tmp:
+            template = tmp.read()
+        for p in self.attendees:
+            p.generate_roommate_email(
+                template=template,
+                rm_line=rm_line,
+                no_rm_line=no_rm_line,
+                output_dir=output_dir
+            )
 
     def write_rooms(self):
         room_dict = {}

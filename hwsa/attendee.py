@@ -51,6 +51,7 @@ class Attendee:
         self.career_stage = None
         self.accessibility = None
         self.event = None
+        self.title = None
         self.loc = False
 
         for key, value in kwargs.items():
@@ -164,6 +165,50 @@ class Attendee:
                 value = str(value)
                 a_dict[key] = value
         return a_dict
+
+    def generate_roommate_email(self, template: str, rm_line=None, no_rm_line=None, output_dir: str = None):
+        if self.room is None:
+            return
+        if rm_line is None:
+            rm_line = "You have been assigned a room with {rms}"
+        if no_rm_line is None:
+            no_rm_line = "You have been assigned a room to yourself (simply because of odd numbers)."
+
+        roommate_str = ""
+        n_roommates = len(self.room.roommates) - 1
+        for i, person in enumerate(self.room.roommates):
+            if person is not self:
+                name = person.full_name()
+                if i == n_roommates - 1:
+                    if n_roommates > 1:
+                        roommate_str += f"and {name}."
+                    else:
+                        roommate_str += f"{name}."
+                else:
+                    roommate_str += f"{name}, "
+        while roommate_str.endswith(" "):
+            roommate_str = roommate_str[:-1]
+        roommate_str = roommate_str[:-1] + "."
+        if not roommate_str:
+            rm_line = no_rm_line
+        else:
+            rm_line = rm_line.format(rms=roommate_str)
+
+        my_name = self.full_name()
+        if self.title is not None:
+            my_name = self.title + " " + my_name
+
+        email = template.format(name=my_name, roommate_line=rm_line)
+        email = self.email + "\n\n" + email
+
+        if output_dir is None:
+            output_dir = os.path.join(self.event.output, "roommate_emails")
+            u.mkdir_check(output_dir)
+        output = os.path.join(output_dir, self.filename())
+        with open(output, "w") as file:
+            file.write(email)
+
+        return email
 
     def filename(self):
         return str(self).replace(" ", "_")
