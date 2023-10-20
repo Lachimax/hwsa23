@@ -487,12 +487,15 @@ class Event:
         n_with = 0
 
         plt.close()
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(4,3))
+        title = output_name.replace("_", " ")
+        title = title[0].upper() + title[1:]
+        ax.set_title(title)
 
         for i, property_name in enumerate(property_list):
             people = property_dict[property_name]
             str_dict[property_name] = list(map(lambda p: str(p), filter(lambda p: not p.loc, people)))
-            numbers[property_name] = len(str_dict[property_name])
+            n = numbers[property_name] = len(str_dict[property_name])
             fractions[property_name] = len(people) / len(self.attendees)
             percentages[property_name] = fractions[property_name] * 100
             n_with += numbers[property_name]
@@ -501,10 +504,14 @@ class Event:
                 for p in people:
                     print("\t\t", p)
 
+            if n == 1:
+                ps = "person"
+            else:
+                ps = "people"
             plt.bar(
                 x=i,
                 height=numbers[property_name],
-                label=f"{property_name} ({numbers[property_name]} people; {np.round(percentages[property_name], 1)}%)",
+                label=f"{property_name} ({n} {ps}; {np.round(percentages[property_name], 1)}%)",
                 color=colours[i],
                 align='center',
                 edgecolor="black"
@@ -520,7 +527,10 @@ class Event:
         }
 
         plt.xticks([])
-        plt.legend(loc=(1.01, 0))
+        plt.legend(
+            loc=(1.1, 0),
+            # bbox_to_anchor=(0, -0.1)
+        )
         plt.savefig(os.path.join(self.output, f"{output_name}.pdf"), bbox_inches="tight")
         plt.savefig(os.path.join(self.output, f"{output_name}.png"), bbox_inches="tight")
         plt.close()
