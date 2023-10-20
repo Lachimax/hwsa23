@@ -3,9 +3,30 @@ import os
 import numpy as np
 import pandas as pd
 
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+
 from hwsa.attendee import Attendee
 from hwsa.room import Room
 import hwsa.utils as u
+
+colours = [
+    "cyan",
+    "magenta",
+    "green",
+    "red",
+    "blue",
+    "purple",
+    "violet",
+    "darkorange",
+    "gray",
+    "lightblue",
+    "lime",
+    "gold",
+    "brown",
+    "maroon",
+    "pink",
+]
 
 
 class Event:
@@ -248,7 +269,10 @@ class Event:
                 u.debug_print(f"Failed to find room for {person.room_str()}")
             return room
 
-    def allocate_roommates(self):
+    def allocate_roommates(
+            self,
+            email_template_path: str = None
+    ):
         # Zeroth pass: ingest rooms that have been assigned manually
         for room in self.rooms:
             room.update_manual()
@@ -360,7 +384,8 @@ class Event:
         self.write_room_yamls()
         self.write_attendee_table()
         self.write_attendee_yamls()
-        self.generate_roommate_emails()
+        if isinstance(email_template_path, str):
+            self.generate_roommate_emails(email_template_path)
 
     def generate_roommate_emails(
             self,
@@ -371,7 +396,8 @@ class Event:
     ):
         if template_path is None:
             template_path = os.path.join(self.output, "roommate_email_template.txt")
-        output_dir = os.path.join(self.output, "roommate_emails")
+        if output_dir is None:
+            output_dir = os.path.join(self.output, "roommate_emails")
         u.mkdir_check(output_dir)
         with open(template_path, "r") as tmp:
             template = tmp.read()
@@ -454,25 +480,50 @@ class Event:
     def _show_property(self, property_dict: dict, output_name: str, show_all: bool = False):
         str_dict = {}
         numbers = {}
+        fractions = {}
+        percentages = {}
         property_list = list(property_dict.keys())
         property_list.sort()
         n_with = 0
-        for property_name in property_list:
+
+        plt.close()
+        fig, ax = plt.subplots()
+
+        for i, property_name in enumerate(property_list):
             people = property_dict[property_name]
             str_dict[property_name] = list(map(lambda p: str(p), filter(lambda p: not p.loc, people)))
             numbers[property_name] = len(str_dict[property_name])
+            fractions[property_name] = len(people) / len(self.attendees)
+            percentages[property_name] = fractions[property_name] * 100
             n_with += numbers[property_name]
-            print(f"\t{property_name}: {len(people)} ({np.round(len(people) * 100 / len(self.attendees), 1)} %)")
+            print(f"\t{property_name}: {len(people)} ({np.round(percentages[property_name], 1)} %)")
             if show_all:
                 for p in people:
                     print("\t\t", p)
 
+            plt.bar(
+                x=i,
+                height=numbers[property_name],
+                label=f"{property_name} ({numbers[property_name]} people; {np.round(percentages[property_name], 1)}%)",
+                color=colours[i],
+                align='center',
+                edgecolor="black"
+            )
+
         write_dict = {
             "People": str_dict,
             "Numbers": numbers,
+            "Fractions": fractions,
+            "Percentages": percentages,
             "n_distinct": len(numbers),
             "n_with": n_with
         }
+
+        plt.xticks([])
+        plt.legend(loc=(1.01, 0))
+        plt.savefig(os.path.join(self.output, f"{output_name}.pdf"), bbox_inches="tight")
+        plt.savefig(os.path.join(self.output, f"{output_name}.png"), bbox_inches="tight")
+        plt.close()
         u.save_params(file=os.path.join(self.output, f"{output_name}.yaml"), dictionary=write_dict)
         return write_dict
 
