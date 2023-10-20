@@ -444,7 +444,7 @@ class Event:
     def get_affiliations(self):
         for p in self.attendees:
             self.add_affiliation(p)
-        return self.diets
+        return self.affiliations
 
     def get_accessibility(self):
         for p in self.attendees:
